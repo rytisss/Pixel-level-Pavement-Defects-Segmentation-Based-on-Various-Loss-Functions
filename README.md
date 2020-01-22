@@ -3,6 +3,8 @@ Improved Pixel-level Pavement Defects Segmentation Based on Various Loss Functio
   
 In this place we store U-Net based neural network implementation used for investigation. It containes model and loss function implementation, using Keras with Tensorflow backend. Another architectures might be derived using this codebase. Few ideas: autoencoders with triple convolutional, quadruple convolutional operation, residual connections.
 
+More will be updated soon....
+
 Investigation is made on CrackForest dataset [1], [2]. Data examples (label is invested for visualization reasons):  
 
 <img src="https://github.com/rytisss/Pixel-level-Pavement-Defects-Segmentation-Based-on-Various-Loss-Functions/blob/master/res/035_image.png" width="425"/> <img src="https://github.com/rytisss/Pixel-level-Pavement-Defects-Segmentation-Based-on-Various-Loss-Functions/blob/master/res/035_label.png" width="425"/> 
