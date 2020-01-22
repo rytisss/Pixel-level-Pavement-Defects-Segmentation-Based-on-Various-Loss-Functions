@@ -6,7 +6,6 @@ In this place we store U-Net based neural network implementation used for invest
 More will be updated soon....
 
 Investigation is made on CrackForest dataset [1], [2]. Data examples (label is invested for visualization reasons):  
-
 <img src="https://github.com/rytisss/Pixel-level-Pavement-Defects-Segmentation-Based-on-Various-Loss-Functions/blob/master/res/035_image.png" width="425"/> <img src="https://github.com/rytisss/Pixel-level-Pavement-Defects-Segmentation-Based-on-Various-Loss-Functions/blob/master/res/035_label.png" width="425"/> 
 
 Architecture used for research (script for PlotNeuralNet project used to visualize network [3]):  
