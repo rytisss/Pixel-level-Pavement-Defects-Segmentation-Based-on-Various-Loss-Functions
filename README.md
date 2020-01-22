@@ -12,7 +12,7 @@ Link to randomly formed (from CrackForest [1], [2]) datasets used for research: 
   
 References:  
 [1] Shi, Y.; Cui, L.; Qi, Z.; Meng, F.; Chen, Z. Automatic road crack detection using random structured forests. IEEE Trans. Intell. Transp. Syst. 2016, 17, 3434–3445.  
-[2] Cui, Limeng and Qi, Zhiquan and Chen, Zhensong and Meng, Fan and Shi, Y. Pavement Distress Detection Using Random Decision Forests; Springer, 2015;
+[2] Cui, Limeng and Qi, Zhiquan and Chen, Zhensong and Meng, Fan and Shi, Y. Pavement Distress Detection Using Random Decision Forests; Springer, 2015;  
 [3] Iqbal, H. HarisIqbal88/PlotNeuralNet v1.0.0 (Version v1.0.0). 2018. (url: https://github.com/HarisIqbal88/PlotNeuralNet)
 
 
