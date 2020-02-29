@@ -1,22 +1,13 @@
 from keras import Model
 from keras.callbacks import ModelCheckpoint
-from script.model.autoencoder import *
-from script.model.utilities import *
+from autoencoder import *
+from utilities import *
 import numpy as np 
 import os
 import keras
 import math
-
-os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
-os.environ['TF_DETERMINISTIC_OPS'] = '1'
-import tensorflow as tf
-from tfdeterminism import patch
-patch()
-
 import random
-os.environ['PYTHONHASHSEED']=str(1)
-random.seed(1)
-np.random.seed(1)
+
 
 data_gen_args = dict(rotation_range=0.0,
                     width_shift_range=0.00,

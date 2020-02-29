@@ -1,7 +1,7 @@
 # 5-layer UNet
 from keras.models import *
-from script.model.losses import *
-from script.model.layers import *
+from losses import *
+from layers import *
 from keras.optimizers import *
 from keras.utils.vis_utils import plot_model
 """

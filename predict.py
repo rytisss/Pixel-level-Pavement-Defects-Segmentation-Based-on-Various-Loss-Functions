@@ -1,6 +1,6 @@
-from script.model.utilities import *
+from utilities import *
 import glob
-from script.model.autoencoder import *
+from autoencoder import *
 import os
 import keras as K
 
