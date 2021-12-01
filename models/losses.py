@@ -25,19 +25,15 @@ class Loss(Enum):
 
 alpha = K.backend.variable(1.0, dtype='float32')
 
-"""
-Scheduling example
 
-alpha = K.variable(1.0, dtype='float32')
-class AlphaScheduler(Callback):
- def on_epoch_end(self, epoch, logs=None):
-  alpha_ = K.get_value(alpha)
-  alpha_ -= 0.01
-  if alpha_ < 0.1:
-   alpha_ = 0.1
-  K.set_value(alpha, alpha_)
-  print(alpha_)
-"""
+class AlphaScheduler(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        alpha_ = K.backend.get_value(alpha)
+        alpha_ -= 0.02
+        if alpha_ < 0.1:
+            alpha_ = 0.1
+        K.backend.set_value(alpha, alpha_)
+        tf.print(alpha_)
 
 
 def dice_eval(y_true, y_pred):
@@ -210,7 +206,7 @@ def surface_loss(y_true, y_pred):
                                      inp=[y_true],
                                      Tout=tf.float32)
     multipled = y_pred * y_true_dist_map
-    return K.mean(multipled)
+    return K.backend.mean(multipled)
 
 
 def surficenDiceLoss(y_true, y_pred):
