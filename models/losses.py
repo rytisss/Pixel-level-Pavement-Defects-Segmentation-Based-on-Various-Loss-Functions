@@ -1,8 +1,8 @@
 from enum import Enum
 import numpy as np
 from scipy.ndimage import distance_transform_edt as distance
-import keras as K
 import tensorflow as tf
+import tensorflow.keras as K
 
 
 # Define all possible losses
@@ -40,6 +40,24 @@ class AlphaScheduler(Callback):
 """
 
 
+def dice_eval(y_true, y_pred):
+    """
+    Threshold before evaluating
+    """
+    y_true_th = K.backend.cast(K.backend.greater(y_true, 0.5), 'float32')
+    y_pred_th = K.backend.cast(K.backend.greater(y_pred, 0.5), 'float32')
+    return dice_score(y_true_th, y_pred_th)
+
+
+def cross_and_dice_loss_multiclass(w_cross, w_dice):
+    def cross_and_dice_loss_(y_true, y_pred):
+        cross_entropy_value = tf.losses.categorical_crossentropy(y_true, y_pred)
+        dice_loss_value = dice_loss(y_true, y_pred)
+        return w_dice * dice_loss_value + w_cross * cross_entropy_value
+
+    return cross_and_dice_loss_
+
+
 def calc_dist_map(seg):
     res = np.zeros_like(seg)
     posmask = seg.astype(np.bool)
@@ -48,13 +66,14 @@ def calc_dist_map(seg):
         res = distance(negmask) * negmask - (distance(posmask) - 1) * posmask
     return res
 
-#get weight matrix for tensor (image or images stack)
+
+# get weight matrix for tensor (image or images stack)
 def get_weight_matrix(y_true):
     y_true = K.backend.cast(y_true, 'float32')
     # if we want to get same size of output, kernel size must be odd number
-    #averaged_mask = K.pool2d(
+    # averaged_mask = K.pool2d(
     #    y_true, pool_size=(11, 11), strides=(1, 1), padding='same', pool_mode='avg')
-    #border = K.cast(K.greater(averaged_mask, 0.005), 'float32') * K.cast(K.less(averaged_mask, 0.995), 'float32')
+    # border = K.cast(K.greater(averaged_mask, 0.005), 'float32') * K.cast(K.less(averaged_mask, 0.995), 'float32')
     # basically finds label, (non-black) points in tensor
     labelmatrix = K.backend.cast(K.backend.greater(y_true, 0.5), 'float32')
     weight = K.backend.ones_like(y_true)
@@ -64,9 +83,11 @@ def get_weight_matrix(y_true):
     weight *= (w0 / w1)
     return weight
 
+
 def binary_crossentropy(y_true, y_pred):
-    loss = tf.reduce_mean(tf.keras.losses.binary_crossentropy(y_true = y_true, y_pred = y_pred, from_logits = False))
+    loss = tf.reduce_mean(tf.keras.losses.binary_crossentropy(y_true=y_true, y_pred=y_pred, from_logits=False))
     return loss
+
 
 def dice_score(y_true, y_pred):
     smooth = K.backend.epsilon()
@@ -76,22 +97,26 @@ def dice_score(y_true, y_pred):
     answer = (2. * intersection + smooth) / (K.backend.sum(y_true_f) + K.backend.sum(y_pred_f) + smooth)
     return answer
 
+
 def dice_loss(y_true, y_pred):
     answer = 1. - dice_score(y_true, y_pred)
     return answer
 
-#get weight matrix for tensor (image or images stack)
-def get_edge_matrix(y_true, min_kernel_overlay = 0.5, max_kernel_overlay = 0.8):
+
+# get weight matrix for tensor (image or images stack)
+def get_edge_matrix(y_true, min_kernel_overlay=0.5, max_kernel_overlay=0.8):
     y_true = K.backend.cast(y_true, 'float32')
-    #if we want to get same size of output, kernel size must be odd number
+    # if we want to get same size of output, kernel size must be odd number
     averaged_mask = K.backend.pool2d(
         y_true, pool_size=(3, 3), strides=(1, 1), padding='same', pool_mode='avg')
-    edge = K.backend.cast(K.backend.greater(averaged_mask, min_kernel_overlay), 'float32') * K.backend.cast(K.backend.less(averaged_mask, max_kernel_overlay), 'float32')
-    #take everything that is the label only (not outside)
+    edge = K.backend.cast(K.backend.greater(averaged_mask, min_kernel_overlay), 'float32') * K.backend.cast(
+        K.backend.less(averaged_mask, max_kernel_overlay), 'float32')
+    # take everything that is the label only (not outside)
     edge *= y_true
     return edge
 
-def get_weight_matrix_with_reduced_edges(y_true, max_kernel_overlay = 0.5):
+
+def get_weight_matrix_with_reduced_edges(y_true, max_kernel_overlay=0.5):
     edge = get_edge_matrix(y_true, 0.1, max_kernel_overlay)
     # take the edges only in the label (not outside)
     edge *= y_true
@@ -99,7 +124,8 @@ def get_weight_matrix_with_reduced_edges(y_true, max_kernel_overlay = 0.5):
     weight = get_weight_matrix(label_without_edge)
     return weight
 
-def adjusted_weighted_bce_loss(max_kernel_overlay = 0.8):
+
+def adjusted_weighted_bce_loss(max_kernel_overlay=0.8):
     def adjusted_weighted_bce_loss_(y_true, y_pred):
         weight = get_weight_matrix_with_reduced_edges(y_true, max_kernel_overlay)
         # avoiding overflow
@@ -110,21 +136,27 @@ def adjusted_weighted_bce_loss(max_kernel_overlay = 0.8):
         loss = (1. - y_true) * logit_y_pred + (1. + (weight - 1.) * y_true) * \
                (K.backend.log(1. + K.backend.exp(-K.backend.abs(logit_y_pred))) + K.backend.maximum(-logit_y_pred, 0.))
         return K.backend.sum(loss) / K.backend.sum(weight)
+
     return adjusted_weighted_bce_loss_
+
 
 def cross_and_dice_loss(w_cross, w_dice):
     def cross_and_dice_loss_(y_true, y_pred):
         cross_entropy_value = binary_crossentropy(y_true, y_pred)
         dice_loss_value = dice_loss(y_true, y_pred)
         return w_dice * dice_loss_value + w_cross * cross_entropy_value
+
     return cross_and_dice_loss_
+
 
 def weighted_cross_and_dice_loss(w_weighted_cross, w_dice):
     def weighted_cross_and_dice_loss_(y_true, y_pred):
         weighted_cross_entropy_value = weighted_bce_loss(y_true, y_pred)
         dice_loss_value = dice_loss(y_true, y_pred)
         return w_dice * dice_loss_value + w_weighted_cross * weighted_cross_entropy_value
+
     return weighted_cross_and_dice_loss_
+
 
 # weight: weighted tensor(same shape with mask image)
 def weighted_bce_loss(y_true, y_pred):
@@ -148,6 +180,7 @@ def weighted_dice_loss(y_true, y_pred):
     score = (2. * K.sum(w * intersection) + smooth) / (K.sum(w * m1) + K.sum(w * m2) + smooth)
     loss = 1. - K.sum(score)
     return loss
+
 
 def weighted_bce_dice_loss(y_true, y_pred):
     y_true = K.cast(y_true, 'float32')

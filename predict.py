@@ -1,91 +1,46 @@
-from utilities import *
-import glob
-from autoencoder import *
-import os
-import keras as K
+import cv2
 
-data_gen_args = dict(rotation_range=0.0,
-                    width_shift_range=0.00,
-                    height_shift_range=0.00,
-                    shear_range=0.00,
-                    zoom_range=0.00,
-                    horizontal_flip=False,
-                    fill_mode='nearest')
+from models.autoencoder import AutoEncoder4
+from models.losses import Loss
+from processing import tensor_to_image, image_to_tensor
+from utilities import gather_image_from_dir
 
-for setNumber in range(3, 4):
-    configs = ['l4k32AutoEncoder4_5x5_CROSSENTROPY_0_0.001_',
-               'l4k32AutoEncoder4_5x5_CROSSENTROPY25DICE75_0_0.001_',
-               'l4k32AutoEncoder4_5x5_CROSSENTROPY50DICE50_0_0.001_',
-               'l4k32AutoEncoder4_5x5_CROSSENTROPY75DICE25_0_0.001_',
-               'l4k32AutoEncoder4_5x5_DICE_0_0.001_',
-               'l4k32AutoEncoder4_5x5_WEIGHTED60CROSSENTROPY_0_0.001_',
-               'l4k32AutoEncoder4_5x5_WEIGHTED70CROSSENTROPY_0_0.001_',
-               'l4k32AutoEncoder4_5x5_WEIGHTEDCROSSENTROPY_0_0.001_',
-               'l4k32AutoEncoder4_5x5_WEIGHTEDCROSSENTROPY25DICE75_0_0.001_',
-               'l4k32AutoEncoder4_5x5_WEIGHTEDCROSSENTROPY50DICE50_0_0.001_',
-               'l4k32AutoEncoder4_5x5_WEIGHTEDCROSSENTROPY75DICE25_0_0.001_']
+import tensorflow as tf
+# Weights path
+weight_path = 'weights_output/best_weights.hdf5' # provide path to weights '*.hdf5'
+# Test images directory
+test_images = r'D:\pavement defect data\CrackForestdatasets\datasets\Set_0\Test\Images/'
 
-    configs = ['l4k32AutoEncoder4_5x5_CROSSENTROPY_0_0.001_']
-    configNumber = 1
-    for config in configs:
-        #configName = 'l5k16Dice_1'
-        configName = config
-        configName += str(setNumber)
-        inputDir = 'C:/src/Set_' + str(setNumber) +'/'+ configName+'/'
-        weightList = glob.glob(inputDir + '*.hdf5')
-        counter = 0
-        for weightPath in weightList:
-            print('Opening: ' + weightPath)
-            fileNameWithExt = weightPath.rsplit('\\', 1)[1]
-            fileName, extension = os.path.splitext(fileNameWithExt)
-            kernels_list = [32]
-            size = (320,480,1)
-            for kernels in kernels_list:
-                if configNumber == 0:
-                    try:
-                        model = AutoEncoder4VGG16_5x5(number_of_kernels = kernels,input_size = size, pretrained_weights = weightPath, loss_function = Loss.CROSSENTROPY)
-                        testGene = testGenerator('E:/RoadCracksInspection/datasets/Set_' + str(setNumber) + '/Test/Images/', target_size = (320,480))
-                        results = model.predict_generator(testGene,35,verbose=1)      
-                        predictionOutputDir = 'E:/RoadCracksInspection/trainingOutput/Set_' + str(setNumber) +'/'+configName+'/prediction/' + str(counter) + '/'
-                        if not os.path.exists(predictionOutputDir):
-                            os.makedirs(predictionOutputDir)
-                        saveResult(predictionOutputDir,results)
-                        break
-                    except:
-                        print('Not AutoEncoder4VGG16_5x5')
-                if configNumber == 1:
-                    try:
-                        model = AutoEncoder4_5x5(number_of_kernels = kernels,input_size = size, pretrained_weights = weightPath, loss_function = Loss.CROSSENTROPY)
-                        testGene = testGenerator('D:/RoadCracksInspection/datasets/Set_' + str(setNumber) + '/Test/Images/', target_size = (320,480))
-                        results = model.predict_generator(testGene,35,verbose=1)      
-                        predictionOutputDir = 'D:/CracksTrainings/Set_' + str(setNumber) +'/'+configName+'/prediction/' + str(counter) + '/'
-                        if not os.path.exists(predictionOutputDir):
-                            os.makedirs(predictionOutputDir)
-                        saveResult(predictionOutputDir,results)
-                        break
-                    except:
-                        print('Not AutoEncoder4_5x5')
-                if configNumber == 2:
-                    try:
-                        model = AutoEncoder4ResAddOpConcDecFirstEx_5x5(number_of_kernels = kernels,input_size = size, pretrained_weights = weightPath, loss_function = Loss.CROSSENTROPY)
-                        testGene = testGenerator('E:/RoadCracksInspection/datasets/Set_' + str(setNumber) + '/Test/Images/', target_size = (320,480))
-                        results = model.predict_generator(testGene,35,verbose=1)      
-                        predictionOutputDir = 'E:/RoadCracksInspection/trainingOutput/Set_' + str(setNumber) +'/'+configName+'/prediction/' + str(counter) + '/'
-                        if not os.path.exists(predictionOutputDir):
-                            os.makedirs(predictionOutputDir)
-                        saveResult(predictionOutputDir,results)
-                        break
-                    except:
-                        print('Not AutoEncoder4ResAddOpConcDecFirstEx_5x5')
-            """    
-            predictionOutputDir = 'E:/RoadCracksInspection/trainingOutputPictures/Set_' + str(setNumber) +'/'+configName+'/prediction/' + str(counter) + '/'
-            if not os.path.exists(predictionOutputDir):
-                os.makedirs(predictionOutputDir)
-            saveResult(predictionOutputDir,results)
-            """
+image_width = 480
+image_height = 320
+image_channels = 1
 
-            counter+=1
-            K.backend.clear_session()
-        #configNumber+=1
-            #print('Sleep for 5s !')
-            #time.sleep(5)
+def predict():
+    # Define model
+    model = AutoEncoder4(input_size=(image_height, image_width, image_channels),
+                         loss_function=Loss.CROSSENTROPY,
+                         pretrained_weights=weight_path)
+
+    image_paths = gather_image_from_dir(test_images)
+
+    # Load and predict on all images from directory
+    for image_path in image_paths:
+        # Load image
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        # preprocess
+        norm_image = image_to_tensor(image)
+        # predict
+        prediction = model.predict(norm_image)
+        # make image uint8
+        prediction_image = tensor_to_image(prediction)
+
+        # Do you want to visualize image?
+        show_image = True
+        if show_image:
+            cv2.imshow("image", image)
+            cv2.imshow("prediction", prediction_image)
+            cv2.waitKey(1000)
+
+
+if __name__ == '__main__':
+    predict()
