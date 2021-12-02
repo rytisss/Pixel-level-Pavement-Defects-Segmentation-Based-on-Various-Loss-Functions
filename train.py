@@ -34,12 +34,12 @@ lr = 0.001
 
 # predefined all the loss functions for training. Separate training will be conducted to each of these functions
 loss_dict = {
+    'boundary': Loss.SURFACEnDice,
     'cross_entropy': Loss.CROSSENTROPY,
     'dice': Loss.DICE,
     'weighted_cross_entropy': Loss.WEIGHTEDCROSSENTROPY,
     'weighted60_cross_entropy': Loss.WEIGHTED60CROSSENTROPY,
     'weighted70_cross_entropy': Loss.WEIGHTED70CROSSENTROPY,
-    'boundary': Loss.SURFACEnDice,
     'cross_entropy_50_dice_50': Loss.CROSSENTROPY50DICE50,
     'cross_entropy_25_dice_75': Loss.CROSSENTROPY25DICE75,
     'cross_entropy_75_dice_25': Loss.CROSSENTROPY75DICE25,
@@ -120,7 +120,6 @@ def train():
                                       callbacks=[saver, scheduler],
                                       shuffle=True)
         else:
-
             train_history = model.fit(train_data_generator,
                                       steps_per_epoch=number_of_train_iterations,
                                       epochs=number_of_epoch,

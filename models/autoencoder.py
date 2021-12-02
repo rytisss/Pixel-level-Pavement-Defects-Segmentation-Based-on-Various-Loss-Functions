@@ -14,7 +14,7 @@ from tensorflow.keras.optimizers import Adam
 from models.losses import Loss
 from models.losses import dice_loss, dice_score, dice_eval, binary_crossentropy, Active_Contour_Loss, surface_loss, FocalLoss, \
     weighted_bce_loss, adjusted_weighted_bce_loss, cross_and_dice_loss, \
-    weighted_cross_and_dice_loss, cross_and_dice_loss_multiclass
+    weighted_cross_and_dice_loss, cross_and_dice_loss_multiclass, surficenDiceLoss
 
 
 def CompileModel(model, lossFunction, num_class=2, learning_rate=1e-3):
@@ -26,7 +26,7 @@ def CompileModel(model, lossFunction, num_class=2, learning_rate=1e-3):
         elif lossFunction == Loss.ACTIVECONTOURS:
             model.compile(optimizer=Adam(learning_rate=learning_rate), loss=Active_Contour_Loss, metrics=[dice_eval])
         elif lossFunction == Loss.SURFACEnDice:
-            model.compile(optimizer=Adam(learning_rate=learning_rate), loss=surface_loss, metrics=[dice_eval])
+            model.compile(optimizer=Adam(learning_rate=learning_rate), loss=surficenDiceLoss, metrics=[dice_eval])
         elif lossFunction == Loss.FOCALLOSS:
             model.compile(optimizer=Adam(learning_rate=learning_rate), loss=FocalLoss, metrics=[dice_eval])
         elif lossFunction == Loss.WEIGHTEDCROSSENTROPY:
